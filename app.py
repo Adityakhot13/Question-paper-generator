@@ -99,7 +99,7 @@ Section C: Long Answer (3)
     for i in range(3):  # retry logic
         try:
             response = client.models.generate_content(
-                model="gemini-1.5-flash",
+                model="gemini-2.5-flash",
                 contents=prompt
             )
             return response.text
