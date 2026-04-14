@@ -8,7 +8,7 @@ from google import genai
 # =========================
 # 🔑 API
 # =========================
-client = genai.Client(api_key="AIzaSyCOO3Tn0YRLxasB3Lcfc2P_fukWLF4LIu0")
+client = genai.Client(api_key="AIzaSyDqvSfysjC_JAS7zr80QA13KuSXaLj33Ts")
 #import os
 #client = genai.Client(api_key=os.getenv("API_KEY"))
 
