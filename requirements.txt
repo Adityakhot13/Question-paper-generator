@@ -1,5 +1,8 @@
 streamlit
+python-3.10
 pypdf
 sentence-transformers
 faiss-cpu
 google-genai
+torch
+torchvision
