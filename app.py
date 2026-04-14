@@ -10,13 +10,14 @@ import time
 # =========================
 # 🔑 API (SAFE)
 # =========================
-API_KEY = os.getenv("API_KEY")
+# API_KEY = os.getenv("API_KEY")
 
-if not API_KEY:
-    st.error("API key not found! Add it in Streamlit Secrets.")
-    st.stop()
+# if not API_KEY:
+#     st.error("API key not found! Add it in Streamlit Secrets.")
+#     st.stop()
 
-client = genai.Client(api_key=API_KEY)
+# client = genai.Client(api_key=API_KEY)
+client = genai.Client(api_key="AIzaSyCOO3Tn0YRLxasB3Lcfc2P_fukWLF4LIu0")
 
 # =========================
 # 📄 LOAD PDF
