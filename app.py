@@ -4,20 +4,13 @@ from sentence_transformers import SentenceTransformer
 import faiss
 import numpy as np
 from google import genai
-import os
-import time
 
 # =========================
-# 🔑 API (SAFE)
+# 🔑 API
 # =========================
-# API_KEY = os.getenv("API_KEY")
-
-# if not API_KEY:
-#     st.error("API key not found! Add it in Streamlit Secrets.")
-#     st.stop()
-
-# client = genai.Client(api_key=API_KEY)
 client = genai.Client(api_key="AIzaSyCOO3Tn0YRLxasB3Lcfc2P_fukWLF4LIu0")
+#import os
+#client = genai.Client(api_key=os.getenv("API_KEY"))
 
 # =========================
 # 📄 LOAD PDF
@@ -38,11 +31,7 @@ def chunk_text(text, chunk_size=500):
 # =========================
 # 🔢 EMBEDDINGS
 # =========================
-@st.cache_resource
-def load_model():
-    return SentenceTransformer("all-MiniLM-L6-v2")
-
-embed_model = load_model()
+embed_model = SentenceTransformer("all-MiniLM-L6-v2")
 
 def create_embeddings(chunks):
     return embed_model.encode(chunks)
@@ -65,18 +54,19 @@ def retrieve(query, chunks, index, k=2):
     return [chunks[i] for i in indices[0]]
 
 # =========================
-# 🧠 GENERATE (FIXED)
+# 🧠 GENERATE
 # =========================
 def generate_questions(context):
 
     prompt = f"""
 You are an expert university exam paper setter.
 
-STRICT RULES:
+Generate a CLEAN and STRICTLY formatted question paper.
+
+RULES:
 - Only Section A, Section B, Section C
-- Do NOT repeat sections
-- Do NOT add extra sections
-- Keep format clean
+- No repetition
+- No extra sections
 
 CONTENT:
 {context}
@@ -84,34 +74,23 @@ CONTENT:
 FORMAT:
 
 Section A: MCQs (5)
-Each question must include:
-- Question
-- a) option
-- b) option
-- c) option
-- d) option
-- Correct Answer
+- 4 options each
+- Mark correct answer
 
 Section B: Short Answer (5)
 
 Section C: Long Answer (3)
 """
 
-    for i in range(3):  # retry logic
-        try:
-            response = client.models.generate_content(
-                model="gemini-2.5-flash",
-                contents=prompt
-            )
-            return response.text
+    response = client.models.generate_content(
+        model="gemini-2.5-flash",   # stable
+        contents=prompt
+    )
 
-        except Exception as e:
-            time.sleep(5)
-
-    return "⚠️ Error: Unable to generate question paper. Try again."
+    return response.text
 
 # =========================
-# 🎨 UI
+# 🎨 STREAMLIT UI
 # =========================
 st.title("📘 AI Question Paper Generator")
 
@@ -124,34 +103,29 @@ if uploaded_file is not None:
 
         with st.spinner("Processing..."):
 
-            try:
-                text = load_pdf(uploaded_file)
-                chunks = chunk_text(text)
+            text = load_pdf(uploaded_file)
+            chunks = chunk_text(text)
+            embeddings = create_embeddings(chunks)
+            index = build_index(embeddings)
 
-                embeddings = create_embeddings(chunks)
-                index = build_index(embeddings)
+            context_chunks = retrieve(
+                "Generate exam questions",
+                chunks,
+                index,
+                k=2
+            )
 
-                context_chunks = retrieve(
-                    "Generate exam questions",
-                    chunks,
-                    index,
-                    k=2
-                )
+            context = "\n\n".join(context_chunks)[:2000]
 
-                # 🔥 control tokens
-                context = "\n\n".join(context_chunks)[:1500]
+            result = generate_questions(context)
 
-                result = generate_questions(context)
+            st.subheader("Generated Question Paper")
+            st.text_area("Output", result, height=400)
 
-                st.subheader("Generated Question Paper")
-                st.text_area("Output", result, height=400)
-
-                st.download_button(
-                    label="Download Question Paper",
-                    data=result,
-                    file_name="question_paper.txt",
-                    mime="text/plain"
-                )
-
-            except Exception as e:
-                st.error(f"Error: {str(e)}")
+            # Download button
+            st.download_button(
+                label="Download Question Paper",
+                data=result,
+                file_name="question_paper.txt",
+                mime="text/plain"
+            )
